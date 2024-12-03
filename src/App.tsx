@@ -1,16 +1,16 @@
 import '@blocknote/core/fonts/inter.css';
-import { useCreateBlockNote } from '@blocknote/react';
-import { BlockNoteView } from '@blocknote/shadcn';
 import '@blocknote/shadcn/style.css';
 import { Layout } from './components/layout';
+import { ThemeProvider } from '@/components/theme-provider';
+import Editor from './components/editor';
 
 function App() {
-  const editor = useCreateBlockNote();
-
   return (
-    <Layout>
-      <BlockNoteView editor={editor} />
-    </Layout>
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <Layout>
+        <Editor />
+      </Layout>
+    </ThemeProvider>
   );
 }
 
