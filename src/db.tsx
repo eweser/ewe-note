@@ -5,11 +5,12 @@ import type { Note, Registry, Room } from '@eweser/db';
 import * as config from './config';
 import type { ReactNode } from 'react';
 import { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import { NotesRoomProvider } from './notes-room';
 
 /** to make sure that we only have one default room created, make a new uuid v4 for the default room, but if there is already one in localStorage use that*/
 const randomRoomId = crypto.randomUUID();
-export const roomId = localStorage.getItem('roomId') || randomRoomId;
-localStorage.setItem('roomId', roomId);
+export const defaultRoomId = localStorage.getItem('roomId') || randomRoomId;
+localStorage.setItem('roomId', defaultRoomId);
 
 function getDeviceType() {
   const userAgent = navigator.userAgent;
@@ -32,7 +33,7 @@ export const collectionKey = 'notes';
 const initialRooms: Registry = [
   {
     collectionKey,
-    id: roomId,
+    id: defaultRoomId,
     // add something to the room name that will be unique to this device
     name: `Notes from my ${getDeviceType()} Device, ${new Date().toLocaleString(
       'en-US',
@@ -75,7 +76,9 @@ export type DbContextType = {
   hasToken: boolean;
   selectedRoom: Room<Note> | null;
   selectedNoteId: string | null;
+  setSelectedNoteId: (noteId: string) => void;
   allRooms: Room<Note>[];
+  allRoomIds: string[];
 };
 
 export const DbContext = createContext<DbContextType | null>(null);
@@ -93,7 +96,10 @@ export const DbProvider = ({ children }: { children: ReactNode }) => {
   const [loaded, setLoaded] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
   const [hasToken, setHasToken] = useState(false);
-  const defaultNotesRoom = db.getRoom<Note>(collectionKey, roomId);
+  const defaultNotesRoom = db.getRoom<Note>(collectionKey, defaultRoomId);
+  const allRoomIds = db.getRooms('notes').map((room) => room.id);
+  const allRooms = db.getRooms(collectionKey);
+  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
 
   useEffect(() => {
     if (hasToken) {
@@ -139,13 +145,29 @@ export const DbProvider = ({ children }: { children: ReactNode }) => {
       loggedIn,
       hasToken,
       selectedRoom: defaultNotesRoom,
-      selectedNoteId: null,
-      allRooms: db.getRooms(collectionKey),
+      selectedNoteId,
+      allRooms,
+      allRoomIds,
+      setSelectedNoteId,
     }),
-    [loaded, loggedIn, hasToken, defaultNotesRoom]
+    [
+      loaded,
+      loggedIn,
+      hasToken,
+      defaultNotesRoom,
+      selectedNoteId,
+      allRooms,
+      allRoomIds,
+    ]
   );
 
   return (
-    <DbContext.Provider value={dbContextValue}>{children}</DbContext.Provider>
+    <DbContext.Provider value={dbContextValue}>
+      {allRoomIds.map((roomId) => (
+        <NotesRoomProvider key={roomId} roomId={roomId}>
+          {children}
+        </NotesRoomProvider>
+      ))}
+    </DbContext.Provider>
   );
 };
