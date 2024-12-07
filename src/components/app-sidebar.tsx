@@ -2,7 +2,7 @@ import * as React from 'react';
 import { ChevronRight } from 'lucide-react';
 
 import { SearchForm } from '@/components/search-form';
-import { VersionSwitcher } from '@/components/version-switcher';
+
 import {
   Collapsible,
   CollapsibleContent,
@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Icons } from '@/lib/icons';
 import { SidebarUser } from './sidebar-user';
+import { useDb } from '@/db';
 
 // This is sample data.
 const data = {
@@ -172,13 +173,10 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { loggedIn } = useDb();
   return (
     <Sidebar {...props}>
       <SidebarHeader>
-        <VersionSwitcher
-          versions={data.versions}
-          defaultVersion={data.versions[0]}
-        />
         <SearchForm />
       </SidebarHeader>
       <SidebarContent className="gap-0">
@@ -218,6 +216,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ))}
       </SidebarContent>
       <SidebarFooter>
+        {loggedIn ? (
+          <a href="#" className="flex items-center space-x-2">
+            <span className="inline-block font-bold">Logout</span>
+          </a>
+        ) : (
+          <a href="#" className="flex items-center space-x-2">
+            <span className="inline-block font-bold">Login</span>
+          </a>
+        )}
         <a href="https://eweser.com" className="flex items-center space-x-2">
           <Icons.Logo className="h-6 w-6" />
           <span className="inline-block font-bold">Eweser DB</span>
