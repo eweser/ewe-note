@@ -57,7 +57,12 @@ interface SidebarProps {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { loggedIn, allRooms } = useDb();
+  const {
+    loggedIn,
+    allRooms,
+    loginUrl,
+    db: { logout },
+  } = useDb();
   const initialData: SidebarProps = {
     navMain: allRooms.map((room) => {
       const Notes = room.getDocuments();
@@ -159,18 +164,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
       <SidebarFooter>
         {loggedIn ? (
-          <a href="#" className="flex items-center space-x-2">
+          <button onClick={logout} className="flex items-center space-x-2">
+            <Icons.Logo className="h-6 w-6" />
             <span className="inline-block font-bold">Logout</span>
-          </a>
+          </button>
         ) : (
-          <a href="#" className="flex items-center space-x-2">
+          <a href={loginUrl} className="flex items-center space-x-2">
+            <Icons.Logo className="h-6 w-6" />
             <span className="inline-block font-bold">Login</span>
           </a>
         )}
-        <a href="https://eweser.com" className="flex items-center space-x-2">
-          <Icons.Logo className="h-6 w-6" />
-          <span className="inline-block font-bold">Eweser DB</span>
-        </a>
+
         <SidebarUser user={data.user} />
       </SidebarFooter>
       <SidebarRail />
