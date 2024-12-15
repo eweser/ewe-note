@@ -472,4 +472,14 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  optimizeDeps: {
+    include: ['yjs'],
+    exclude: [],
+  },
+  build: {
+    // minify: false,
+    rollupOptions: {
+      external: ['yjs'], // Ensure `yjs` is treated as a single external dependency
+    },
+  },
 });
