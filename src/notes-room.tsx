@@ -1,12 +1,14 @@
 import { Room, Note, Documents } from '@eweser/db';
 import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { useDb } from './db';
+import type { GetDocuments } from '@eweser/db';
 
 export type NotesRoomContextType = {
   room: Room<Note>;
   roomId: string;
   connectionStatus: string;
   notes: Documents<Note>;
+  Notes: GetDocuments<Note>;
   createNote: () => void;
   updateNoteText: (text: string, note?: Note) => void;
   deleteNote: (note: Note) => void;
@@ -40,7 +42,7 @@ export const NotesRoomProvider = ({
     throw new Error(`Room with id ${roomId} not found`);
   }
 
-  const Notes = useMemo(() => db.getDocuments(room), [room]);
+  const Notes = useMemo(() => room.getDocuments(), [room]);
 
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
 
@@ -93,6 +95,7 @@ export const NotesRoomProvider = ({
       roomId,
       connectionStatus,
       notes,
+      Notes,
       createNote,
       updateNoteText,
       deleteNote,
@@ -102,6 +105,7 @@ export const NotesRoomProvider = ({
       roomId,
       connectionStatus,
       notes,
+      Notes,
       createNote,
       updateNoteText,
       deleteNote,

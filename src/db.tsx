@@ -6,13 +6,19 @@ import * as config from './config';
 import type { ReactNode } from 'react';
 import { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import { NotesRoomProvider } from './notes-room';
+import { logger } from './utils';
 
 /** to make sure that we only have one default room created, make a new uuid v4 for the default room, but if there is already one in localStorage use that*/
-const randomRoomId = crypto.randomUUID();
-export const defaultRoomId = localStorage.getItem('roomId') || randomRoomId;
+const defaultRoomId = 'test-room';
+// const randomRoomId = crypto.randomUUID();
+const defaultNoteId = 'test-note id';
+// const defaultNoteId = localStorage.getItem('noteId') || randomNoteId;
 localStorage.setItem('roomId', defaultRoomId);
+localStorage.setItem('noteId', defaultNoteId);
 
-function getDeviceType() {
+const defaultNoteText = `# Welcome to EweNote! 🐑`;
+
+export function getDeviceType() {
   const userAgent = navigator.userAgent;
   let deviceType = 'Unknown';
 
@@ -61,8 +67,6 @@ export const db = new Database({
   authServer: config.AUTH_SERVER,
   // set `logLevel` to 0 to see debug messages in the console
   logLevel: 0,
-  // use this to sync webRTC locally with the test-rpc-server started with `npm run start-test-rpc-server`
-  webRTCPeers: config.WEB_RTC_PEERS,
   initialRooms,
 });
 
@@ -75,7 +79,7 @@ export type DbContextType = {
   loggedIn: boolean;
   hasToken: boolean;
   selectedRoom: Room<Note> | null;
-  selectedNoteId: string | null;
+  selectedNoteId: string;
   setSelectedNoteId: (noteId: string) => void;
   allRooms: Room<Note>[];
   allRoomIds: string[];
@@ -97,6 +101,26 @@ export const DbProvider = ({ children }: { children: ReactNode }) => {
   const [loggedIn, setLoggedIn] = useState(false);
   const [hasToken, setHasToken] = useState(false);
   const defaultNotesRoom = db.getRoom<Note>(collectionKey, defaultRoomId);
+  const [defaultNote, setDefaultNote] = useState<Note | null>(null);
+
+  useEffect(() => {
+    if (defaultNote || !defaultNotesRoom) return;
+
+    try {
+      let note = db.getDocuments(defaultNotesRoom).getUndeleted()[0];
+      if (!note) {
+        note =
+          defaultNotesRoom.getDocuments().get(defaultNoteId) ??
+          defaultNotesRoom
+            .getDocuments()
+            .new({ text: defaultNoteText }, defaultNoteId);
+      }
+      setDefaultNote(note);
+    } catch (error) {
+      logger('Error creating default note', error);
+    }
+  }, [defaultNote, defaultNotesRoom]);
+
   const allRoomIds = db.getRooms('notes').map((room) => room.id);
   const allRooms = db.getRooms(collectionKey);
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
@@ -145,7 +169,7 @@ export const DbProvider = ({ children }: { children: ReactNode }) => {
       loggedIn,
       hasToken,
       selectedRoom: defaultNotesRoom,
-      selectedNoteId,
+      selectedNoteId: selectedNoteId ?? defaultNote?._id ?? defaultNoteId,
       allRooms,
       allRoomIds,
       setSelectedNoteId,
@@ -156,6 +180,7 @@ export const DbProvider = ({ children }: { children: ReactNode }) => {
       hasToken,
       defaultNotesRoom,
       selectedNoteId,
+      defaultNote?._id,
       allRooms,
       allRoomIds,
     ]

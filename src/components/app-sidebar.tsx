@@ -24,6 +24,7 @@ import {
 import { Icons } from '@/lib/icons';
 import { SidebarUser } from './sidebar-user';
 import { useDb } from '@/db';
+import { Note, Room } from '@eweser/db';
 
 const exampleData = {
   user: {
@@ -32,12 +33,34 @@ const exampleData = {
     avatar: '/avatars/shadcn.jpg',
   },
 };
+interface NavItem {
+  title: string;
+  url: string;
+  isActive: boolean;
+}
+
+interface NavMain {
+  title: string;
+  url: string;
+  items: NavItem[];
+}
+
+interface User {
+  name: string;
+  email: string;
+  avatar: string;
+}
+
+interface SidebarProps {
+  navMain: NavMain[];
+  user: User;
+}
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { loggedIn, allRooms, db } = useDb();
-  const data = {
+  const { loggedIn, allRooms } = useDb();
+  const initialData: SidebarProps = {
     navMain: allRooms.map((room) => {
-      const Notes = db.getDocuments(room);
+      const Notes = room.getDocuments();
       const notes = Notes.sortByRecent(Notes.getUndeleted());
       const notesArray = Array.from(Object.values(notes));
       return {
@@ -57,6 +80,42 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }),
     user: exampleData.user,
   };
+
+  const [data, setData] = React.useState(initialData);
+
+  const updateNotes = (room: Room<Note>, notesArray: Note[]): NavMain[] => {
+    return data.navMain.map((item) => {
+      if (item.title === room.name) {
+        return {
+          ...item,
+          items: notesArray.map((note) => {
+            return {
+              title:
+                note.text.length > 20
+                  ? note.text.substring(0, 20) + '...'
+                  : note.text,
+              url: '#',
+              isActive: false,
+            };
+          }),
+        };
+      }
+      return item;
+    });
+  };
+
+  allRooms.forEach((room) => {
+    const Notes = room.getDocuments();
+    Notes.onChange(() => {
+      const notes = Notes.sortByRecent(Notes.getUndeleted());
+      const notesArray = Array.from(Object.values(notes));
+      setData({
+        ...data,
+        navMain: updateNotes(room, notesArray),
+      });
+    });
+  });
+
   return (
     <Sidebar {...props}>
       <SidebarHeader>
