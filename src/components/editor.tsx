@@ -16,8 +16,6 @@ export default function Editor({
   selectedRoom: Room<Note>;
   selectedNoteId: string;
 }) {
-  const { db } = useDb();
-  console.log(db);
   const doc = selectedRoom.ydoc;
   const provider =
     selectedRoom.ySweetProvider ?? selectedRoom.indexedDbProvider;
