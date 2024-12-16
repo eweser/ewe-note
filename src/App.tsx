@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import Editor from './components/editor';
 import { DbProvider, useDb } from './db';
 import { Icons } from './lib/icons';
+import { TooltipProvider } from './components/ui/tooltip';
 
 function App() {
   const { loaded, selectedRoom, selectedNoteId } = useDb();
@@ -30,7 +31,9 @@ function App() {
 
 const AppWithDbProvider = () => (
   <DbProvider>
-    <App />
+    <TooltipProvider delayDuration={0}>
+      <App />
+    </TooltipProvider>
   </DbProvider>
 );
 
