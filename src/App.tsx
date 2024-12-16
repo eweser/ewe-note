@@ -11,7 +11,10 @@ function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       {/* You can check that the ydoc exists to make sure the room is connected */}
-      {loaded && selectedRoom?.ydoc && selectedNoteId ? (
+      {loaded &&
+      selectedRoom?.id &&
+      selectedRoom.ydoc?.store &&
+      selectedNoteId ? (
         <Layout>
           <Editor selectedRoom={selectedRoom} selectedNoteId={selectedNoteId} />
         </Layout>

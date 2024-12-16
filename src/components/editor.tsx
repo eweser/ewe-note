@@ -3,11 +3,12 @@ import { useCreateBlockNote } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/shadcn';
 import '@blocknote/shadcn/style.css';
 import { useTheme } from '@/components/theme-provider';
-import { getDeviceType, useDb } from '@/db';
-import { Note, Room } from '@eweser/db';
+import { getDeviceType } from '@/db';
+import type { Note, Room } from '@eweser/db';
 import { useNotesRoom } from '@/notes-room';
 import { useEffect } from 'react';
 import { Icons } from '@/lib/icons';
+import { logger } from '@/utils';
 
 export default function Editor({
   selectedRoom,
@@ -19,9 +20,10 @@ export default function Editor({
   const doc = selectedRoom.ydoc;
   const provider =
     selectedRoom.ySweetProvider ?? selectedRoom.indexedDbProvider;
+
   const { notes, updateNoteText } = useNotesRoom(selectedRoom.id);
 
-  const note = notes[selectedNoteId];
+  const note = notes ? notes[selectedNoteId] : null;
   if (!note || !doc || !provider) {
     return <Icons.Spinner className="w-24 h-24 animate-spin" />;
   }
@@ -76,10 +78,14 @@ function EditorInternal({
   useEffect(() => {
     (async () => {
       if (!note.text) return;
-
+      const existing = await editor.blocksToMarkdownLossy();
+      if (existing && note.text && existing === note.text) {
+        logger('existing === note.text');
+      }
       const markdown = await editor.tryParseMarkdownToBlocks(note.text);
       editor.replaceBlocks(editor.document, markdown);
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   // TODO: listen for remote updates, but filter out updates that are from this browser
 
