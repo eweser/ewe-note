@@ -80,7 +80,10 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
                   className="group/label text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 >
                   <CollapsibleTrigger>
-                    <span className="line-clamp-1 text-left"> {room.name}</span>
+                    <span title={room.name} className="line-clamp-1 text-left">
+                      {room.name}
+                    </span>
+
                     <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
                   </CollapsibleTrigger>
                 </SidebarGroupLabel>
