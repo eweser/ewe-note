@@ -77,16 +77,27 @@ function EditorInternal({
   // Pull the initial note text from eweser-db and set it in the editor
   useEffect(() => {
     (async () => {
-      if (!note.text) return;
+      if (!editor || !note.text) return;
       const existing = await editor.blocksToMarkdownLossy();
       if (existing && note.text && existing === note.text) {
         logger('existing === note.text');
+      } else {
+        const markdown = await editor.tryParseMarkdownToBlocks(note.text);
+        editor.replaceBlocks(editor.document, markdown);
       }
-      const markdown = await editor.tryParseMarkdownToBlocks(note.text);
-      editor.replaceBlocks(editor.document, markdown);
+
+      // set focus
+      setTimeout(() => {
+        editor.setTextCursorPosition(
+          editor.document[editor.document.length - 1],
+          'end'
+        );
+        editor.focus();
+      }, 0);
     })();
+    // don't want to rerun on note text change
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [editor]);
   // TODO: listen for remote updates, but filter out updates that are from this browser
 
   const { theme } = useTheme();
