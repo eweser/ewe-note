@@ -78,6 +78,7 @@ export type DbContextType = {
   loggedIn: boolean;
   hasToken: boolean;
   selectedRoom: Room<Note> | null;
+  setSelectedRoom: (room: Room<Note>) => void;
   selectedNoteId: string;
   setSelectedNoteId: (noteId: string) => void;
   allRooms: Room<Note>[];
@@ -177,6 +178,7 @@ export const DbProvider = ({ children }: { children: ReactNode }) => {
       loggedIn,
       hasToken,
       selectedRoom: selectedRoom ?? defaultNotesRoom,
+      setSelectedRoom,
       selectedNoteId: selectedNoteId ?? defaultNote?._id ?? defaultNoteId,
       allRooms,
       allRoomIds,
