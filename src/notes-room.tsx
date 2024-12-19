@@ -14,10 +14,15 @@ export type NotesRoomType = {
   deleteNote: (note: Note) => void;
 };
 
-export const useNotesRoom = (roomId: string): NotesRoomType => {
+export const useNotesRoom = (
+  roomId: string,
+  withAwareness = false
+): NotesRoomType => {
   const { db, setSelectedNoteId } = useDb();
   const room = db.getRoom<Note>('notes', roomId);
-
+  if (withAwareness) {
+    room.addAwareness();
+  }
   if (!room) {
     throw new Error(
       `Room with id ${roomId} not found. rooms: ${db

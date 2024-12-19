@@ -1,17 +1,18 @@
 import '@blocknote/core/fonts/inter.css';
 import '@blocknote/shadcn/style.css';
 import { Database } from '@eweser/db';
-import type { Note, Registry, Room } from '@eweser/db';
+import type { CollectionKey, Note, Registry, Room } from '@eweser/db';
 import * as config from './config';
 import type { ReactNode } from 'react';
 import { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import { logger } from './utils';
+import { useGetUserFromDb } from './user';
 
 /** to make sure that we only have one default room created, make a new uuid v4 for the default room, but if there is already one in localStorage use that*/
 const randomRoomId = crypto.randomUUID();
-const defaultRoomId = localStorage.getItem('roomId') ?? randomRoomId;
+const defaultRoomId = localStorage.getItem('roomId') || randomRoomId;
 const randomNoteId = crypto.randomUUID();
-const defaultNoteId = localStorage.getItem('noteId') ?? randomNoteId;
+const defaultNoteId = localStorage.getItem('noteId') || randomNoteId;
 localStorage.setItem('roomId', defaultRoomId);
 localStorage.setItem('noteId', defaultNoteId);
 
@@ -33,32 +34,21 @@ export function getDeviceType() {
   return deviceType;
 }
 
-export const collectionKey = 'notes';
+export const collectionKey: CollectionKey = 'notes';
+const defaultRoomName = `Notes from my ${getDeviceType()} Device, ${new Date().toLocaleString(
+  'en-US',
+  {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }
+)}`; // add something to the room name that will be unique to this device
 
-const initialRooms: Registry = [
+const initialRooms = [
   {
     collectionKey,
     id: defaultRoomId,
-    // add something to the room name that will be unique to this device
-    name: `Notes from my ${getDeviceType()} Device, ${new Date().toLocaleString(
-      'en-US',
-      {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      }
-    )}`,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    publicAccess: 'private',
-    readAccess: [],
-    writeAccess: [],
-    adminAccess: [],
-    token: null,
-    tokenExpiry: null,
-    ySweetUrl: null,
-    _deleted: false,
-    _ttl: null,
+    name: defaultRoomName,
   },
 ];
 
@@ -78,11 +68,17 @@ export type DbContextType = {
   loggedIn: boolean;
   hasToken: boolean;
   selectedRoom: Room<Note> | null;
-  setSelectedRoom: (room: Room<Note>) => void;
+  setSelectedRoom: (room: Room<Note> | null) => void;
   selectedNoteId: string;
-  setSelectedNoteId: (noteId: string) => void;
+  setSelectedNoteId: (noteId: string | null) => void;
   allRooms: Room<Note>[];
   allRoomIds: string[];
+  user: {
+    firstName: string;
+    lastName: string;
+    avatar: string;
+  };
+  signOut: () => void;
 };
 
 export const DbContext = createContext<DbContextType | null>(null);
@@ -96,6 +92,13 @@ export function useDb() {
   return context;
 }
 
+const signOut = () => {
+  db.logoutAndClear();
+  localStorage.removeItem('roomId');
+  localStorage.removeItem('noteId');
+  window.document.location.reload();
+};
+
 export const DbProvider = ({ children }: { children: ReactNode }) => {
   const [loaded, setLoaded] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
@@ -107,13 +110,13 @@ export const DbProvider = ({ children }: { children: ReactNode }) => {
   const [defaultNote, setDefaultNote] = useState<Note | null>(null);
 
   useEffect(() => {
-    if (selectedRoom && defaultNotesRoom) {
+    if (!selectedRoom && defaultNotesRoom) {
       setSelectedRoom(defaultNotesRoom);
     }
   }, [selectedRoom, defaultNotesRoom]);
 
   useEffect(() => {
-    if (defaultNote || !defaultNotesRoom) return;
+    if (defaultNote || !defaultNotesRoom?.ydoc) return;
 
     try {
       let note = db.getDocuments(defaultNotesRoom).getUndeleted()[0];
@@ -170,34 +173,27 @@ export const DbProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  const dbContextValue = useMemo(
-    () => ({
-      db,
-      loginUrl,
-      loaded,
-      loggedIn,
-      hasToken,
-      selectedRoom: selectedRoom ?? defaultNotesRoom,
-      setSelectedRoom,
-      selectedNoteId: selectedNoteId ?? defaultNote?._id ?? defaultNoteId,
-      allRooms,
-      allRoomIds,
-      setSelectedNoteId,
-    }),
-    [
-      loaded,
-      loggedIn,
-      hasToken,
-      defaultNotesRoom,
-      selectedNoteId,
-      selectedRoom,
-      defaultNote?._id,
-      allRooms,
-      allRoomIds,
-    ]
-  );
+  const user = useGetUserFromDb(db);
 
   return (
-    <DbContext.Provider value={dbContextValue}>{children}</DbContext.Provider>
+    <DbContext.Provider
+      value={{
+        db,
+        loginUrl,
+        loaded,
+        loggedIn,
+        hasToken,
+        selectedRoom: selectedRoom ?? defaultNotesRoom,
+        setSelectedRoom,
+        selectedNoteId: selectedNoteId ?? defaultNote?._id ?? defaultNoteId,
+        allRooms,
+        allRoomIds,
+        setSelectedNoteId,
+        user,
+        signOut,
+      }}
+    >
+      {children}
+    </DbContext.Provider>
   );
 };

@@ -9,6 +9,7 @@ import { TooltipProvider } from './components/ui/tooltip';
 
 function App() {
   const { loaded, selectedRoom, selectedNoteId } = useDb();
+
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       {/* You can check that the ydoc exists to make sure the room is connected */}
@@ -17,7 +18,11 @@ function App() {
       selectedRoom.ydoc?.store &&
       selectedNoteId ? (
         <Layout>
-          <Editor selectedRoom={selectedRoom} selectedNoteId={selectedNoteId} />
+          <Editor
+            key={selectedNoteId + selectedRoom.id}
+            selectedRoom={selectedRoom}
+            selectedNoteId={selectedNoteId}
+          />
         </Layout>
       ) : (
         // usually loads almost instantaneously, but we need to make sure a yDoc is ready before we can use it

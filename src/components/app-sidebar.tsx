@@ -25,17 +25,24 @@ import { SidebarUser } from './sidebar-user';
 import { useDb } from '@/db';
 import type { ComponentProps } from 'react';
 import { useState } from 'react';
-import { Button } from '@/lib/button';
 import removeMarkdown from 'markdown-to-text';
-
-const exampleUser = {
-  name: 'shadcn',
-  email: 'm@example.com',
-  avatar: '/avatars/shadcn.jpg',
-};
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Note } from '@eweser/db';
+import { Button } from './ui/button';
 
 export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
   const {
+    db,
     loggedIn,
     allRooms,
     loginUrl,
@@ -43,10 +50,39 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
     selectedRoom,
     setSelectedNoteId,
     setSelectedRoom,
-    db: { logoutAndClear },
+    user,
+    signOut,
   } = useDb();
-
+  const [creatingRoom, setCreatingRoom] = useState(false);
+  const [newRoomName, setNewRoomName] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
+  const handleCreateRoom = async () => {
+    try {
+      setCreatingRoom(true);
+      const newRoom = db.newRoom<Note>({
+        collectionKey: 'notes',
+        name: newRoomName,
+      });
+
+      await newRoom.load();
+      console.log('new room app', newRoom);
+      setSelectedRoom(newRoom);
+      const newNote = newRoom.getDocuments().new({ text: '# New Note' });
+      setSelectedNoteId(newNote._id);
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setCreatingRoom(false);
+      setNewRoomName('');
+    }
+  };
+  const handleCreateNote = () => {
+    if (!selectedRoom) {
+      throw new Error('No room selected');
+    }
+    const newNote = selectedRoom.getDocuments().new({ text: '# New Note' });
+    setSelectedNoteId(newNote._id);
+  };
 
   return (
     <Sidebar {...props}>
@@ -55,12 +91,47 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent className="gap-0" key={refreshKey}>
         <div className="flex align-middle justify-center">
-          <Button variant="ghost">
+          <Button variant="ghost" onClick={handleCreateNote}>
             <SquarePen />
           </Button>
-          <Button variant="ghost">
-            <FolderPlus />
-          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="ghost">
+                <FolderPlus />
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>New Folder</DialogTitle>
+                <DialogDescription>
+                  Give me a name that sparks joy.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-1">
+                <Label htmlFor="new-room-name">Folder Name</Label>
+                <Input
+                  id="new-room-name"
+                  type="text"
+                  placeholder="Enter folder name"
+                  value={newRoomName}
+                  onChange={(e) => setNewRoomName(e.target.value)}
+                  disabled={creatingRoom}
+                />
+              </div>
+              <DialogFooter>
+                <Button variant="secondary" disabled={creatingRoom}>
+                  Cancel
+                </Button>
+                <Button onClick={handleCreateRoom} disabled={creatingRoom}>
+                  {creatingRoom ? (
+                    <Icons.Spinner className="mr-2" />
+                  ) : (
+                    'Create Folder'
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
         {/* We create a collapsible SidebarGroup for each parent. */}
         {allRooms.map((room) => {
@@ -80,7 +151,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
                   className="group/label text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 >
                   <CollapsibleTrigger>
-                    <span title={room.name} className="line-clamp-1 text-left">
+                    <span title={room.id} className="line-clamp-1 text-left">
                       {room.name}
                     </span>
 
@@ -94,17 +165,19 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
                         <SidebarMenuItem key={note._id}>
                           <SidebarMenuButton
                             onClick={() => {
-                              if (selectedNoteId === note._id) {
-                                return;
-                              }
-                              if (selectedRoom?.id !== room.id) {
-                                setSelectedRoom(room);
-                              }
+                              console.log({
+                                room,
+                                note,
+                                noteId: note._id,
+                                roomId: room.id,
+                              });
                               setSelectedNoteId(note._id);
+                              setSelectedRoom(room);
                             }}
                             className="line-clamp-1"
                             isActive={selectedNoteId === note._id}
                           >
+                            {/* {note._id} */}
                             {removeMarkdown(note.text)}
                           </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -119,13 +192,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
       </SidebarContent>
       <SidebarFooter>
         {loggedIn ? (
-          <button
-            onClick={() => {
-              logoutAndClear();
-              window.location.reload();
-            }}
-            className="flex items-center space-x-2"
-          >
+          <button onClick={signOut} className="flex items-center space-x-2">
             <Icons.Logo className="h-6 w-6" />
             <span className="inline-block font-bold">Logout</span>
           </button>
@@ -136,7 +203,12 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
           </a>
         )}
 
-        <SidebarUser user={exampleUser} />
+        <SidebarUser
+          user={{
+            name: `${user.firstName} ${user.lastName}`,
+            avatar: user.avatar,
+          }}
+        />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

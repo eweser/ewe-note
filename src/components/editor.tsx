@@ -3,13 +3,38 @@ import { useCreateBlockNote } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/shadcn';
 import '@blocknote/shadcn/style.css';
 import { useTheme } from '@/components/theme-provider';
-import { getDeviceType } from '@/db';
+import { getDeviceType, useDb } from '@/db';
 import type { Note, Room } from '@eweser/db';
 import { useNotesRoom } from '@/notes-room';
 import { useEffect } from 'react';
 import { Icons } from '@/lib/icons';
 import { logger } from '@/utils';
 
+const darkModeCursorColors = [
+  '#ffe4a1', // Lightened orange
+  '#ffc4c4', // Lightened red-pink
+  '#ffb3ff', // Lightened magenta
+  '#b3e6ff', // Lightened cyan
+  '#ffd1a3', // Lightened peach
+  '#ffb3b3', // Lightened rose
+  '#c4ffc4', // Lightened green
+  '#ffd6ff', // Lightened lavender
+  '#a1d1ff', // Lightened sky blue
+  '#ffb380', // Lightened coral
+];
+
+const lightModeCursorColors = [
+  '#e63900', // Darker orange-red
+  '#d92626', // Darker crimson
+  '#26d926', // Darker lime green
+  '#2626d9', // Darker royal blue
+  '#d926d9', // Darker fuchsia
+  '#26d9d9', // Darker teal
+  '#d9d926', // Darker yellow-green
+  '#e65c26', // Darker vermillion
+  '#5c26e6', // Darker purple-blue
+  '#2626e6', // Darker navy
+];
 export default function Editor({
   selectedRoom,
   selectedNoteId,
@@ -21,7 +46,7 @@ export default function Editor({
   const provider =
     selectedRoom.ySweetProvider ?? selectedRoom.indexedDbProvider;
 
-  const { notes, updateNoteText } = useNotesRoom(selectedRoom.id);
+  const { notes, updateNoteText } = useNotesRoom(selectedRoom.id, true);
 
   const note = notes ? notes[selectedNoteId] : null;
   if (!note || !doc || !provider) {
@@ -52,6 +77,14 @@ function EditorInternal({
   updateNoteText: (text: string, note?: Note) => void;
   note: Note;
 }) {
+  const { user } = useDb();
+  const { theme } = useTheme();
+  const usedTheme = theme === 'system' ? 'dark' : theme;
+  const cursorColors =
+    usedTheme === 'dark' ? darkModeCursorColors : lightModeCursorColors;
+  /** Really this should be set to the OTHER user's color theme but that is impossible */
+  const cursorColor =
+    cursorColors[Math.floor(Math.random() * cursorColors.length)];
   const editor = useCreateBlockNote({
     collaboration: {
       // The Yjs Provider responsible for transporting updates:
@@ -60,9 +93,8 @@ function EditorInternal({
       fragment: doc.getXmlFragment(selectedNoteId),
       // Information (name and color) for this user:
       user: {
-        name: getDeviceType() + Math.random().toString(36).substring(7),
-        //random color per device
-        color: Math.floor(Math.random() * 16777215).toString(16),
+        name: user.firstName || getDeviceType(),
+        color: cursorColor,
       },
     },
   });
@@ -99,9 +131,6 @@ function EditorInternal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor]);
   // TODO: listen for remote updates, but filter out updates that are from this browser
-
-  const { theme } = useTheme();
-  const usedTheme = theme === 'system' ? 'dark' : theme;
 
   return <BlockNoteView editor={editor} theme={usedTheme} />;
 }
