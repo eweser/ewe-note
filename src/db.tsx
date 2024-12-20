@@ -1,5 +1,6 @@
 import '@blocknote/core/fonts/inter.css';
 import '@blocknote/shadcn/style.css';
+import 'yjs';
 import { Database } from '@eweser/db';
 import type { CollectionKey, Note, Room } from '@eweser/db';
 import * as config from './config';
