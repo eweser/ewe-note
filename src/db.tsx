@@ -1,10 +1,10 @@
 import '@blocknote/core/fonts/inter.css';
 import '@blocknote/shadcn/style.css';
 import { Database } from '@eweser/db';
-import type { CollectionKey, Note, Registry, Room } from '@eweser/db';
+import type { CollectionKey, Note, Room } from '@eweser/db';
 import * as config from './config';
 import type { ReactNode } from 'react';
-import { createContext, useContext, useEffect, useState, useMemo } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { logger } from './utils';
 import { useGetUserFromDb } from './user';
 
