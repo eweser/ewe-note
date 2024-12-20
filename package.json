@@ -12,7 +12,7 @@
   "dependencies": {
     "@blocknote/core": "^0.19.2",
     "@blocknote/react": "^0.19.2",
-    "@eweser/db": "^1.12.0",
+    "@eweser/db": "^1.13.0",
     "@radix-ui/react-avatar": "^1.1.1",
     "@radix-ui/react-checkbox": "^1.1.2",
     "@radix-ui/react-collapsible": "^1.1.1",
