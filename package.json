@@ -30,7 +30,8 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwind-merge": "^2.5.5",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "yjs": "^13.6.20"
   },
   "devDependencies": {
     "@blocknote/shadcn": "^0.19.2",
