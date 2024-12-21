@@ -14,6 +14,9 @@ export default defineConfig({
         name: 'EweNote',
         short_name: 'EweNote',
         theme_color: '#ffffff',
+        background_color: '#ffffff',
+        start_url: '/',
+        display: 'standalone',
         icons: [
           {
             src: 'windows11/SmallTile.scale-100.png',
@@ -469,6 +472,9 @@ export default defineConfig({
         skipWaiting: true,
         clientsClaim: true,
       },
+      devOptions: {
+        // enabled: true, // turn on to enable PWA in development
+      },
     }),
   ],
   resolve: {
@@ -478,6 +484,5 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['yjs'],
-    exclude: [],
   },
 });
