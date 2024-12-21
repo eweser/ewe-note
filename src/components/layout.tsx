@@ -16,6 +16,7 @@ import {
 import type { PropsWithChildren } from 'react';
 import { ModeToggle } from './mode-toggle';
 import { useDb } from '@/db';
+import removeMarkdown from 'markdown-to-text';
 
 export function Layout({ children }: Readonly<PropsWithChildren>) {
   const { selectedRoom, selectedNoteId } = useDb();
@@ -30,12 +31,15 @@ export function Layout({ children }: Readonly<PropsWithChildren>) {
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="#">{selectedRoom?.name}</BreadcrumbLink>
+                  <BreadcrumbLink>{selectedRoom?.name}</BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>
-                    {selectedRoom?.getDocuments().get(selectedNoteId)?.text}
+                  <BreadcrumbPage className="truncate max-w-[200px]">
+                    {removeMarkdown(
+                      selectedRoom?.getDocuments().get(selectedNoteId)?.text ??
+                        ''
+                    )}
                   </BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
