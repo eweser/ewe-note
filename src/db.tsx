@@ -5,7 +5,7 @@ import { Database } from '@eweser/db';
 import type { CollectionKey, Note, Room } from '@eweser/db';
 import * as config from './config';
 import type { ReactNode } from 'react';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { logger } from './utils';
 import { useGetUserFromDb } from './user';
 
@@ -132,7 +132,7 @@ export const DbProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       logger('Error creating default note', error);
     }
-  }, [defaultNote, defaultNotesRoom]);
+  }, [defaultNote, defaultNotesRoom, defaultNotesRoom?.ydoc]);
 
   const allRoomIds = db.getRooms('notes').map((room) => room.id);
   const allRooms = db.getRooms(collectionKey);
@@ -176,25 +176,39 @@ export const DbProvider = ({ children }: { children: ReactNode }) => {
 
   const user = useGetUserFromDb(db);
 
+  const contextValue = useMemo(
+    () => ({
+      db,
+      loginUrl,
+      loaded,
+      loggedIn,
+      hasToken,
+      selectedRoom: selectedRoom ?? defaultNotesRoom,
+      setSelectedRoom,
+      selectedNoteId: selectedNoteId ?? defaultNote?._id ?? defaultNoteId,
+      allRooms,
+      allRoomIds,
+      setSelectedNoteId,
+      user,
+      signOut,
+    }),
+    [
+      loaded,
+      loggedIn,
+      hasToken,
+      selectedRoom,
+      defaultNotesRoom,
+      setSelectedRoom,
+      selectedNoteId,
+      defaultNote,
+      allRooms,
+      allRoomIds,
+      setSelectedNoteId,
+      user,
+    ]
+  );
+
   return (
-    <DbContext.Provider
-      value={{
-        db,
-        loginUrl,
-        loaded,
-        loggedIn,
-        hasToken,
-        selectedRoom: selectedRoom ?? defaultNotesRoom,
-        setSelectedRoom,
-        selectedNoteId: selectedNoteId ?? defaultNote?._id ?? defaultNoteId,
-        allRooms,
-        allRoomIds,
-        setSelectedNoteId,
-        user,
-        signOut,
-      }}
-    >
-      {children}
-    </DbContext.Provider>
+    <DbContext.Provider value={contextValue}>{children}</DbContext.Provider>
   );
 };
