@@ -42,11 +42,12 @@ export default function Editor({
   selectedRoom: Room<Note>;
   selectedNoteId: string;
 }) {
+  const { loggedIn } = useDb();
   const doc = selectedRoom.ydoc;
   const provider =
     selectedRoom.ySweetProvider ?? selectedRoom.indexedDbProvider;
 
-  const { notes, updateNoteText } = useNotesRoom(selectedRoom.id, true);
+  const { notes, updateNoteText } = useNotesRoom(selectedRoom.id, loggedIn);
 
   const note = notes ? notes[selectedNoteId] : null;
   if (!note || !doc || !provider) {
