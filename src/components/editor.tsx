@@ -43,14 +43,16 @@ export default function Editor({
   selectedNoteId: string;
 }) {
   const { loggedIn } = useDb();
-  const doc = selectedRoom.ydoc;
-  const provider =
-    selectedRoom.ySweetProvider ?? selectedRoom.indexedDbProvider;
 
-  const { notes, updateNoteText } = useNotesRoom(selectedRoom.id, loggedIn);
+  const { notes, updateNoteText, room } = useNotesRoom(
+    selectedRoom.id,
+    loggedIn
+  );
+  const provider = room?.ySweetProvider;
+  const doc = room?.ydoc;
 
   const note = notes ? notes[selectedNoteId] : null;
-  if (!note || !doc || !provider) {
+  if (!note || !doc) {
     return <Icons.Spinner className="w-24 h-24 animate-spin" />;
   }
   // needs to be in a different component because hooks can't be called conditionally
@@ -87,17 +89,19 @@ function EditorInternal({
   const cursorColor =
     cursorColors[Math.floor(Math.random() * cursorColors.length)];
   const editor = useCreateBlockNote({
-    collaboration: {
-      // The Yjs Provider responsible for transporting updates:
-      provider,
-      // Where to store BlockNote data in the Y.Doc:
-      fragment: doc.getXmlFragment(selectedNoteId),
-      // Information (name and color) for this user:
-      user: {
-        name: user.firstName || getDeviceType(),
-        color: cursorColor,
-      },
-    },
+    collaboration: provider
+      ? {
+          // The Yjs Provider responsible for transporting updates:
+          provider,
+          // Where to store BlockNote data in the Y.Doc:
+          fragment: doc.getXmlFragment(selectedNoteId),
+          // Information (name and color) for this user:
+          user: {
+            name: user.firstName || getDeviceType(),
+            color: cursorColor,
+          },
+        }
+      : undefined,
   });
 
   // Listen for changes and changes to the editor and update eweser-db note text
