@@ -15,7 +15,7 @@ export default defineConfig({
         short_name: 'EweNote',
         theme_color: '#ffffff',
         background_color: '#ffffff',
-        start_url: '/',
+        start_url: 'https://notes.eweser.com/',
         display: 'standalone',
         icons: [
           {
@@ -471,9 +471,6 @@ export default defineConfig({
       workbox: {
         skipWaiting: true,
         clientsClaim: true,
-      },
-      devOptions: {
-        // enabled: true, // turn on to enable PWA in development
       },
     }),
   ],
