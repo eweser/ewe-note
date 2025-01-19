@@ -58,7 +58,10 @@ export const db = new Database({
   // set `logLevel` to 0 to see debug messages in the console
   logLevel: 0,
   initialRooms,
+  pollForStatus: true,
 });
+// run the rolling sync on the notes collection. This will cycle through all the rooms in the collectionKeysForRollingSync array and sync them for one second each.
+db.collectionKeysForRollingSync = [collectionKey];
 
 export const loginUrl = db.generateLoginUrl({ name: 'EweNote' });
 
@@ -99,6 +102,8 @@ const signOut = () => {
   localStorage.removeItem('noteId');
   window.document.location.reload();
 };
+// for detailed debugging
+// db.on('status', (status) => console.log(status));
 
 export const DbProvider = ({ children }: { children: ReactNode }) => {
   const [loaded, setLoaded] = useState(false);
@@ -109,6 +114,9 @@ export const DbProvider = ({ children }: { children: ReactNode }) => {
   const defaultNotesRoom = db.getRoom<Note>(collectionKey, defaultRoomId);
 
   const [defaultNote, setDefaultNote] = useState<Note | null>(null);
+
+  const [allRooms, setAllRooms] = useState<Room<Note>[]>([]);
+  const allRoomIds = allRooms.map((room) => room.id);
 
   useEffect(() => {
     if (!selectedRoom && defaultNotesRoom) {
@@ -134,8 +142,6 @@ export const DbProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [defaultNote, defaultNotesRoom, defaultNotesRoom?.ydoc]);
 
-  const allRoomIds = db.getRooms('notes').map((room) => room.id);
-  const allRooms = db.getRooms(collectionKey);
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -166,10 +172,14 @@ export const DbProvider = ({ children }: { children: ReactNode }) => {
     db.on('roomsLoaded', () => {
       setLoaded(true);
     });
+    db.on('registrySync', (status) => {
+      if (status === 'success') setAllRooms(db.getRooms('notes'));
+    });
 
     return () => {
-      db.off('roomsLoaded', () => {
-        setLoaded(true);
+      db.off('roomsLoaded', () => setLoaded(true));
+      db.off('registrySync', (status) => {
+        if (status === 'success') setAllRooms(db.getRooms('notes'));
       });
     };
   }, []);
