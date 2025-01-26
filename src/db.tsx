@@ -171,13 +171,17 @@ export const DbProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     db.on('roomsLoaded', () => {
       setLoaded(true);
+      setAllRooms(db.getRooms('notes'));
     });
     db.on('registrySync', (status) => {
       if (status === 'success') setAllRooms(db.getRooms('notes'));
     });
 
     return () => {
-      db.off('roomsLoaded', () => setLoaded(true));
+      db.off('roomsLoaded', () => {
+        setLoaded(true);
+        setAllRooms(db.getRooms('notes'));
+      });
       db.off('registrySync', (status) => {
         if (status === 'success') setAllRooms(db.getRooms('notes'));
       });
