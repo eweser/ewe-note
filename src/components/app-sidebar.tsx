@@ -37,7 +37,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Note } from '@eweser/db';
+import type { Note } from '@eweser/db';
 import { Button } from './ui/button';
 
 export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
@@ -65,7 +65,6 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
       });
 
       await newRoom.load();
-      console.log('new room app', newRoom);
       setSelectedRoom(newRoom);
       const newNote = newRoom.getDocuments().new({ text: '# New Note' });
       setSelectedNoteId(newNote._id);
@@ -165,12 +164,6 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
                         <SidebarMenuItem key={note._id}>
                           <SidebarMenuButton
                             onClick={() => {
-                              console.log({
-                                room,
-                                note,
-                                noteId: note._id,
-                                roomId: room.id,
-                              });
                               setSelectedNoteId(note._id);
                               setSelectedRoom(room);
                             }}

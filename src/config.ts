@@ -9,8 +9,8 @@ export const env =
   import.meta.env.VITE_CI === 'true'
     ? 'ci'
     : import.meta.env.DEV
-    ? 'dev'
-    : 'prod';
+      ? 'dev'
+      : 'prod';
 
 export const dev = env === 'dev';
 export const ci = env === 'ci';

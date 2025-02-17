@@ -1,4 +1,4 @@
-import { Room, Note, Documents } from '@eweser/db';
+import type { Room, Note, Documents } from '@eweser/db';
 import { useState, useEffect, useMemo } from 'react';
 import { useDb } from './db';
 import type { GetDocuments } from '@eweser/db';
